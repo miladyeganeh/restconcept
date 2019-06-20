@@ -32,7 +32,6 @@ public class UserServiceImpl implements UserService {
     public UserDTO createUser(UserDTO user) {
 
         Optional<UserEntity> storedUserDetailes = Optional.ofNullable(userRepository.findByEmail(user.getEmail()));
-
         if (storedUserDetailes.isPresent()){
             throw new RuntimeException("User already exist");
         }
@@ -52,10 +51,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Optional<UserEntity> userEntity = Optional.ofNullable(userRepository.findByEmail(email));
+    public UserDTO getUser(String email) {
 
-        if (userEntity.isPresent())
+        Optional<UserEntity> userEntity = Optional.ofNullable(userRepository.findByEmail(email));
+        if (!userEntity.isPresent())
+            throw new UsernameNotFoundException(email);
+
+        UserDTO returnValue = new UserDTO();
+        BeanUtils.copyProperties(userEntity.get(), returnValue);
+        return returnValue;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+
+        Optional<UserEntity> userEntity = Optional.ofNullable(userRepository.findByEmail(email));
+        if (!userEntity.isPresent())
             throw new UsernameNotFoundException(email);
 
         return new User(userEntity.get().getEmail(), userEntity.get().getEncryptedPassword(), new ArrayList<>());

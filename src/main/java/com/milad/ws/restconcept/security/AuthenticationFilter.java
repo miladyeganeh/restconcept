@@ -1,12 +1,15 @@
 package com.milad.ws.restconcept.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.milad.ws.restconcept.SpringApplicationContext;
 import com.milad.ws.restconcept.model.request.UserLoginRequestModel;
+import com.milad.ws.restconcept.services.UserService;
+import com.milad.ws.restconcept.shared.dto.UserDTO;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.User;
@@ -35,7 +38,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                     .readValue(request.getInputStream(), UserLoginRequestModel.class);
 
             return authenticationManager.authenticate(
-              new AnonymousAuthenticationToken(
+              new UsernamePasswordAuthenticationToken(
                   creds.getEmail(),
                   creds.getPassword(),
                   new ArrayList<>())
@@ -53,8 +56,13 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
         String token = Jwts.builder()
                 .setSubject(username)
                 .setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATIOM_TIME))
-                .signWith(SignatureAlgorithm.ES512, SecurityConstants.TOKEN_SECRET)
+                .signWith(SignatureAlgorithm.HS512, SecurityConstants.TOKEN_SECRET)
                 .compact();
+
+        UserService userService = (UserService) SpringApplicationContext.getBean("userServiceImpl");
+        UserDTO userDTO = userService.getUser(username);
+
         response.addHeader(SecurityConstants.HEADER_STRING, SecurityConstants.TOKEN_PREFIX + token);
+        response.addHeader("UserId", userDTO.getUserId());
     }
 }
