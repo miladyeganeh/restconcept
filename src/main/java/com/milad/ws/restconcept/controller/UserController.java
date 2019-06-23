@@ -1,5 +1,7 @@
 package com.milad.ws.restconcept.controller;
 
+import com.milad.ws.restconcept.exception.ErrorMessages;
+import com.milad.ws.restconcept.exception.UserServiceException;
 import com.milad.ws.restconcept.model.request.UserDetailsRequstModel;
 import com.milad.ws.restconcept.model.response.UserRest;
 import com.milad.ws.restconcept.services.UserService;
@@ -28,10 +30,13 @@ public class UserController {
     }
 
     @PostMapping(consumes = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE },
-            produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
-    public UserRest createUser(@RequestBody UserDetailsRequstModel userDetailsRequstModel){
+                 produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
+    public UserRest createUser(@RequestBody UserDetailsRequstModel userDetailsRequstModel) throws Exception {
         UserRest returnedValue = new UserRest();
 
+        if (userDetailsRequstModel.getFirstName().isEmpty()){
+            throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+        }
         UserDTO userDTO = new UserDTO();
         BeanUtils.copyProperties(userDetailsRequstModel, userDTO);
 
