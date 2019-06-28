@@ -1,5 +1,8 @@
 package com.milad.ws.restconcept.services.impl;
 
+import com.milad.ws.restconcept.exception.ErrorMessage;
+import com.milad.ws.restconcept.exception.ErrorMessages;
+import com.milad.ws.restconcept.exception.UserServiceException;
 import com.milad.ws.restconcept.model.entity.UserEntity;
 import com.milad.ws.restconcept.repositories.UserRepository;
 import com.milad.ws.restconcept.services.UserService;
@@ -71,6 +74,36 @@ public class UserServiceImpl implements UserService {
         BeanUtils.copyProperties(userEntity.get(), returnedValue);
 
         return returnedValue;
+    }
+
+    @Override
+    public UserDTO updateUser(String userId, UserDTO userDTO) {
+        UserDTO returnedValue = new UserDTO();
+        Optional<UserEntity> userEntity = Optional.ofNullable(userRepository.findByUserId(userId));
+
+        if (!userEntity.isPresent())
+            throw new UserServiceException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
+
+        UserEntity existedEntity = userEntity.get();
+        existedEntity.setFirstName(userDTO.getFirstName());
+        existedEntity.setLastName(userDTO.getLastName());
+
+        UserEntity updatedUserDetails = userRepository.save(existedEntity);
+
+        BeanUtils.copyProperties(updatedUserDetails, returnedValue);
+
+        return returnedValue;
+    }
+
+    @Override
+    public void deleteUser(String userId) {
+        Optional<UserEntity> userEntity = Optional.ofNullable(userRepository.findByUserId(userId));
+
+        if (!userEntity.isPresent())
+            throw new UserServiceException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
+
+        UserEntity existedEntity = userEntity.get();
+        userRepository.delete(existedEntity);
     }
 
     @Override
