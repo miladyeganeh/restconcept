@@ -1,15 +1,18 @@
 package com.milad.ws.restconcept.services.impl;
 
-import com.milad.ws.restconcept.exception.ErrorMessage;
 import com.milad.ws.restconcept.exception.ErrorMessages;
 import com.milad.ws.restconcept.exception.UserServiceException;
 import com.milad.ws.restconcept.model.entity.UserEntity;
+import com.milad.ws.restconcept.model.response.UserRest;
 import com.milad.ws.restconcept.repositories.UserRepository;
 import com.milad.ws.restconcept.services.UserService;
 import com.milad.ws.restconcept.shared.dto.UserDTO;
 import com.milad.ws.restconcept.shared.utils.Utils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -17,6 +20,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -34,7 +38,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO createUser(UserDTO user) {
         Optional<UserEntity> storedUserDetailes = Optional.ofNullable(userRepository.findByEmail(user.getEmail()));
-        if (storedUserDetailes.isPresent()){
+        if (storedUserDetailes.isPresent()) {
             throw new RuntimeException("User already exist");
         }
 
@@ -104,6 +108,44 @@ public class UserServiceImpl implements UserService {
 
         UserEntity existedEntity = userEntity.get();
         userRepository.delete(existedEntity);
+    }
+
+    @Override
+    public List<UserDTO> getUsers(int page, int limit) {
+
+        if (page > 0) page -=1;
+
+        Pageable pageableRequest = PageRequest.of(page, limit);
+        Page<UserEntity> userEntityPage = userRepository.findAll(pageableRequest);
+        List<UserEntity> users = userEntityPage.getContent();
+
+        return cloneToUserDTOs(users);
+    }
+
+    @Override
+    public List<UserRest> cloneFromUserDTOs(List<UserDTO> userDTOs) {
+        List<UserRest> returnedValue = new ArrayList<>();
+
+        for (UserDTO userDTO : userDTOs) {
+            UserRest userRest = new UserRest();
+            BeanUtils.copyProperties(userDTO, userRest);
+            returnedValue.add(userRest);
+        }
+
+        return returnedValue;
+    }
+
+    @Override
+    public List<UserDTO> cloneToUserDTOs(List<UserEntity> UserEntities) {
+        List<UserDTO> returnedValue = new ArrayList<>();
+
+        for (UserEntity userEntity : UserEntities) {
+            UserDTO dto = new UserDTO();
+            BeanUtils.copyProperties(userEntity, dto);
+            returnedValue.add(dto);
+        }
+
+        return returnedValue;
     }
 
     @Override

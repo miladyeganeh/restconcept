@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("users") //http.localhost:8080/users
 public class UserController {
@@ -73,4 +75,14 @@ public class UserController {
         returnedValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
         return returnedValue;
     }
+
+    @GetMapping(produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
+    public List<UserRest> getUsers(@RequestParam(value = "page" ,defaultValue = "0") int page,
+                                   @RequestParam(value = "limit" ,defaultValue = "2") int limit){
+
+        List<UserDTO> users= userService.getUsers(page, limit);
+
+        return userService.cloneFromUserDTOs(users);
+    }
+
 }
