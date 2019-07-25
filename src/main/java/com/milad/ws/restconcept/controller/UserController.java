@@ -3,17 +3,20 @@ package com.milad.ws.restconcept.controller;
 import com.milad.ws.restconcept.exception.ErrorMessages;
 import com.milad.ws.restconcept.exception.UserServiceException;
 import com.milad.ws.restconcept.model.request.UserDetailsRequstModel;
-import com.milad.ws.restconcept.model.response.OperationStatusModel;
-import com.milad.ws.restconcept.model.response.RequestOperationName;
-import com.milad.ws.restconcept.model.response.RequestOperationStatus;
-import com.milad.ws.restconcept.model.response.UserRest;
+import com.milad.ws.restconcept.model.response.*;
+import com.milad.ws.restconcept.services.AddressService;
 import com.milad.ws.restconcept.services.UserService;
+import com.milad.ws.restconcept.shared.dto.AddressDTO;
 import com.milad.ws.restconcept.shared.dto.UserDTO;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -22,6 +25,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AddressService addressService;
 
     @GetMapping(path = "/{id}",
             produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
@@ -42,11 +48,12 @@ public class UserController {
         if (userDetails.getFirstName().isEmpty()){
             throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
         }
-        UserDTO userDTO = new UserDTO();
-        BeanUtils.copyProperties(userDetails, userDTO);
+
+        ModelMapper modelMapper = new ModelMapper();
+        UserDTO userDTO = modelMapper.map(userDetails, UserDTO.class);
 
         UserDTO createdUser = userService.createUser(userDTO);
-        BeanUtils.copyProperties(createdUser, returnedValue);
+        returnedValue = modelMapper.map(createdUser, UserRest.class);
 
         return returnedValue;
     }
@@ -78,11 +85,39 @@ public class UserController {
 
     @GetMapping(produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public List<UserRest> getUsers(@RequestParam(value = "page" ,defaultValue = "0") int page,
-                                   @RequestParam(value = "limit" ,defaultValue = "2") int limit){
+                                   @RequestParam(value = "limit" ,defaultValue = "10") int limit){
 
         List<UserDTO> users= userService.getUsers(page, limit);
 
         return userService.cloneFromUserDTOs(users);
+    }
+
+    //http:localHost:8080/rest-concept-ws/users/{userId}/addresses
+    @GetMapping(path = "/{id}/addresses",
+            produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
+    public List<AddressesRest> getUserAddresses(@PathVariable String id){
+        List<AddressesRest> returnedValue = new ArrayList<>();
+
+        List<AddressDTO> addressesDTO = addressService.getAddresses(id);
+
+        if (addressesDTO != null && !addressesDTO.isEmpty()) {
+            Type listType = new TypeToken<List<AddressesRest>>() {}.getType();
+            returnedValue = new ModelMapper().map(addressesDTO, listType);
+        }
+
+        return returnedValue;
+    }
+
+    @GetMapping(path = "/{userId}/addresses/{addressId}",
+            produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
+    public AddressesRest getUserAddress(@PathVariable String addressId){
+        AddressesRest returnedValue;
+
+        AddressDTO addressesDTO = addressService.getAddress(addressId);
+
+        returnedValue = new ModelMapper().map(addressesDTO, AddressesRest.class);
+
+        return returnedValue;
     }
 
 }

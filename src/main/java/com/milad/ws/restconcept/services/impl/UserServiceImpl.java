@@ -6,8 +6,10 @@ import com.milad.ws.restconcept.model.entity.UserEntity;
 import com.milad.ws.restconcept.model.response.UserRest;
 import com.milad.ws.restconcept.repositories.UserRepository;
 import com.milad.ws.restconcept.services.UserService;
+import com.milad.ws.restconcept.shared.dto.AddressDTO;
 import com.milad.ws.restconcept.shared.dto.UserDTO;
 import com.milad.ws.restconcept.shared.utils.Utils;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -42,16 +44,23 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("User already exist");
         }
 
-        UserEntity userEntity = new UserEntity();
-        BeanUtils.copyProperties(user, userEntity);
+        for (int i = 0; i < user.getAddresses().size(); i++) {
+            AddressDTO  address = user.getAddresses().get(i);
+            address.setUserDetails(user);
+            address.setAddressId(utils.generateAddressId(30));
+            user.getAddresses().set(i, address);
+        }
+
+        ModelMapper modelMapper = new ModelMapper();
+        UserEntity userEntity = modelMapper.map(user, UserEntity.class);
 
         String publicUserId = utils.generateUserId(30);
         userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userEntity.setUserId(publicUserId);
 
         UserEntity savedUserDetails = userRepository.save(userEntity);
-        UserDTO returnValue = new UserDTO();
-        BeanUtils.copyProperties(savedUserDetails, returnValue);
+        UserDTO returnValue = modelMapper.map(savedUserDetails, UserDTO.class);
+
 
         return returnValue;
     }
