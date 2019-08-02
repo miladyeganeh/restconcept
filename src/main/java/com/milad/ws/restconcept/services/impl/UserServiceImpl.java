@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
     public UserDTO createUser(UserDTO user) {
         Optional<UserEntity> storedUserDetailes = Optional.ofNullable(userRepository.findByEmail(user.getEmail()));
         if (storedUserDetailes.isPresent()) {
-            throw new RuntimeException("User already exist");
+            throw new UserServiceException("User already exist");
         }
 
         for (int i = 0; i < user.getAddresses().size(); i++) {
@@ -60,7 +60,6 @@ public class UserServiceImpl implements UserService {
 
         UserEntity savedUserDetails = userRepository.save(userEntity);
         UserDTO returnValue = modelMapper.map(savedUserDetails, UserDTO.class);
-
 
         return returnValue;
     }

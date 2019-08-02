@@ -98,7 +98,7 @@ public class UserController {
         return userService.cloneFromUserDTOs(users);
     }
 
-    //http:localHost:8080/rest-concept-ws/users/{userId}/addresses
+
     @GetMapping(path = "/{userId}/addresses",
             produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE, "application/hal+json"})
     public Resources<AddressesRest> getUserAddresses(@PathVariable String userId){
